@@ -25,7 +25,7 @@ void main() {
 	printf("\n");
 
 	//selectionSort(p, size);
-	//insertionSort(p, size);
+	insertionSort(p, size);
 	//bubbleSort(p, size);
 	//quickSort(p, 0, size);
 
