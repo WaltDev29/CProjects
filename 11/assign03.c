@@ -1,80 +1,53 @@
-#include <stdio.h>
+ï»¿#include <stdio.h>
 #include <stdlib.h>
-#include <mysql/mysql.h> // MySQL Connector/C Çì´õ ÆÄÀÏ
+#include "sqlite3.h"  // SQLite3 í—¤ë”
 
-// µ¥ÀÌÅÍº£ÀÌ½º ¿¬°á Á¤º¸¸¦ Á¤ÀÇÇÕ´Ï´Ù.
-// ½ÇÁ¦ È¯°æ¿¡ ¸Â°Ô º¯°æÇØÁÖ¼¼¿ä.
-#define DB_HOST "localhost"
-#define DB_USER "your_username" // MySQL »ç¿ëÀÚ ÀÌ¸§
-#define DB_PASS "your_password" // MySQL ºñ¹Ğ¹øÈ£
-#define DB_NAME "your_database" // »ç¿ëÇÒ µ¥ÀÌÅÍº£ÀÌ½º ÀÌ¸§
+#define DB_FILE "shopdb.sqlite"  // SQLite DB íŒŒì¼ëª…
 
 int main() {
-    MYSQL* conn;         // MySQL ¿¬°á ÇÚµé
-    MYSQL_RES* res;      // SQL Äõ¸® °á°ú¼Â
-    MYSQL_ROW row;       // °á°ú¼ÂÀÇ ÇÑ Çà
-    MYSQL_FIELD* field;  // ÄÃ·³(ÇÊµå) Á¤º¸
+    sqlite3* db;
+    sqlite3_stmt* stmt;
+    const char* sql = "SELECT ê³ ê°ì•„ì´ë””, ê³ ê°ì´ë¦„, ë‚˜ì´, ë“±ê¸‰, ì§ì—…, ì ë¦½ê¸ˆ FROM ê³ ê°";
 
-    // MySQL ¿¬°á °´Ã¼ ÃÊ±âÈ­
-    conn = mysql_init(NULL);
-    if (conn == NULL) {
-        fprintf(stderr, "mysql_init() failed: %s\n", mysql_error(conn));
+    // ë°ì´í„°ë² ì´ìŠ¤ ì—´ê¸°
+    if (sqlite3_open(DB_FILE, &db) != SQLITE_OK) {
+        fprintf(stderr, "ë°ì´í„°ë² ì´ìŠ¤ ì—´ê¸° ì‹¤íŒ¨: %s\n", sqlite3_errmsg(db));
         return 1;
     }
 
-    // µ¥ÀÌÅÍº£ÀÌ½º¿¡ ¿¬°á
-    if (mysql_real_connect(conn, DB_HOST, DB_USER, DB_PASS, DB_NAME, 0, NULL, 0) == NULL) {
-        fprintf(stderr, "mysql_real_connect() failed: %s\n", mysql_error(conn));
-        mysql_close(conn);
+    printf("ë°ì´í„°ë² ì´ìŠ¤ì— ì„±ê³µì ìœ¼ë¡œ ì—°ê²°ë˜ì—ˆìŠµë‹ˆë‹¤.\n");
+
+    // SQL ì¿¼ë¦¬ ì¤€ë¹„
+    if (sqlite3_prepare_v2(db, sql, -1, &stmt, NULL) != SQLITE_OK) {
+        fprintf(stderr, "ì¿¼ë¦¬ ì¤€ë¹„ ì‹¤íŒ¨: %s\n", sqlite3_errmsg(db));
+        sqlite3_close(db);
         return 1;
     }
 
-    printf("µ¥ÀÌÅÍº£ÀÌ½º¿¡ ¼º°øÀûÀ¸·Î ¿¬°áµÇ¾ú½À´Ï´Ù.\n");
-
-    // SELECT SQL Äõ¸® ½ÇÇà
-    if (mysql_query(conn, "SELECT °í°´¾ÆÀÌµğ, °í°´ÀÌ¸§, ³ªÀÌ, µî±Ş, Á÷¾÷, Àû¸³±İ FROM °í°´")) {
-        fprintf(stderr, "SELECT Äõ¸® ½ÇÇà ½ÇÆĞ: %s\n", mysql_error(conn));
-        mysql_close(conn);
-        return 1;
-    }
-
-    // Äõ¸® °á°ú °¡Á®¿À±â
-    res = mysql_store_result(conn);
-    if (res == NULL) {
-        fprintf(stderr, "mysql_store_result() failed: %s\n", mysql_error(conn));
-        mysql_close(conn);
-        return 1;
-    }
-
-    // ÄÃ·³(ÇÊµå) ÀÌ¸§ Ãâ·Â (Çì´õ)
-    int num_fields = mysql_num_fields(res);
+    // ì»¬ëŸ¼ ì´ë¦„ ì¶œë ¥
+    int num_cols = sqlite3_column_count(stmt);
     printf("\n");
-    for (int i = 0; i < num_fields; i++) {
-        field = mysql_fetch_field_nr(res, i);
-        printf("%-15s", field->name); // ÄÃ·³ ÀÌ¸§À» 15Ä­À¸·Î Á¤·ÄÇÏ¿© Ãâ·Â
+    for (int i = 0; i < num_cols; i++) {
+        printf("%-15s", sqlite3_column_name(stmt, i));
     }
     printf("\n");
-    for (int i = 0; i < num_fields * 15; i++) { // ±¸ºĞ¼±
-        printf("-");
-    }
+    for (int i = 0; i < num_cols * 15; i++) printf("-");
     printf("\n");
 
-    // °á°ú Çà ¼øÈ¸ ¹× Ãâ·Â
-    while ((row = mysql_fetch_row(res)) != NULL) {
-        for (int i = 0; i < num_fields; i++) {
-            // row[i]°¡ NULLÀÏ ¼ö ÀÖÀ¸¹Ç·Î (¿¹: ³ªÀÌ ÄÃ·³) NULL Ã³¸®
-            printf("%-15s", row[i] ? row[i] : "NULL");
+    // ê²°ê³¼ ì¶œë ¥
+    while (sqlite3_step(stmt) == SQLITE_ROW) {
+        for (int i = 0; i < num_cols; i++) {
+            const unsigned char* value = sqlite3_column_text(stmt, i);
+            printf("%-15s", value ? (const char*)value : "NULL");
         }
         printf("\n");
     }
 
-    printf("\n¸ğµç °í°´ Á¤º¸¸¦ ¼º°øÀûÀ¸·Î ÀĞ¾î¿Ô½À´Ï´Ù.\n");
+    printf("\nëª¨ë“  ê³ ê° ì •ë³´ë¥¼ ì„±ê³µì ìœ¼ë¡œ ì½ì–´ì™”ìŠµë‹ˆë‹¤.\n");
 
-    // °á°ú¼Â ¸Ş¸ğ¸® ÇØÁ¦
-    mysql_free_result(res);
-
-    // MySQL ¿¬°á Á¾·á
-    mysql_close(conn);
+    // ìì› í•´ì œ
+    sqlite3_finalize(stmt);
+    sqlite3_close(db);
 
     return 0;
 }

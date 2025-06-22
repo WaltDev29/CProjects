@@ -36,8 +36,19 @@
     <ClCompile Include="assign02.c">
       <Filter>소스 파일</Filter>
     </ClCompile>
+    <ClCompile Include="assign04.c">
+      <Filter>소스 파일</Filter>
+    </ClCompile>
     <ClCompile Include="assign03.c">
       <Filter>소스 파일</Filter>
     </ClCompile>
+    <ClCompile Include="C:\Users\AI-510-170\Downloads\sqlite-amalgamation-3500100\sqlite-amalgamation-3500100\sqlite3.c">
+      <Filter>소스 파일</Filter>
+    </ClCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="C:\Users\AI-510-170\Downloads\sqlite-amalgamation-3500100\sqlite-amalgamation-3500100\sqlite3.h">
+      <Filter>헤더 파일</Filter>
+    </ClInclude>
   </ItemGroup>
 </Project>
